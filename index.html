@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ONTAMATONE</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            user-select: none;
+            touch-action: none;
+            gap: 50px;
+        }
+
+        /* 왼쪽: 오타마톤 영역 */
+        #otamatone-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 50px;
+        }
+
+        #otamatone-container {
+            position: relative;
+            width: 250px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #stem {
+            width: 30px;
+            height: 420px;
+            background: linear-gradient(90deg, #1a1a1a, #333, #1a1a1a);
+            border-radius: 15px 15px 0 0;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            z-index: 5;
+        }
+
+        #head-wrapper {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin-top: -20px;
+        }
+
+        .head-base {
+            width: 180px;
+            height: 140px;
+            background: white;
+            border: 6px solid #222;
+            border-radius: 50% 50% 45% 45%;
+            position: absolute;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        #mouth {
+            width: 150px;
+            height: 60px;
+            background: white;
+            border: 6px solid #222;
+            border-top: none;
+            border-radius: 0 0 80px 80px;
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            z-index: 9;
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .eye {
+            width: 20px;
+            height: 20px;
+            background: #222;
+            border-radius: 50%;
+            position: absolute;
+            top: 55px;
+        }
+        .left-eye { left: 45px; }
+        .right-eye { right: 45px; }
+
+        .open #mouth {
+            transform: translateY(15px) scaleY(1.5);
+        }
+
+        /* 오른쪽: UI 패널 영역 */
+        #ui-section {
+            width: 350px;
+            height: 85%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding-right: 50px;
+        }
+
+        .panel {
+            background: white;
+            padding: 30px;
+            border-radius: 28px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+        }
+
+        .instructions h2 { margin-top: 0; font-size: 1.3rem; color: #111; }
+        .instructions p { font-size: 1rem; color: #444; line-height: 1.6; margin: 10px 0; }
+
+        /* 튜너 패널 */
+        #tuner-panel {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        #note-display {
+            font-size: 6rem;
+            font-weight: 900;
+            margin: 5px 0;
+            font-family: 'Arial Black', sans-serif;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        #accuracy-container {
+            width: 100%;
+            margin-top: 25px;
+        }
+
+        #accuracy-bar {
+            width: 100%;
+            height: 14px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 7px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #accuracy-indicator {
+            position: absolute;
+            height: 100%;
+            width: 6px;
+            background: #000;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: left 0.1s ease;
+            border-radius: 3px;
+        }
+
+        #accuracy-text {
+            margin-top: 15px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .frequency-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: rgba(0,0,0,0.5);
+            margin-top: 8px;
+        }
+
+        kbd {
+            background: #ddd;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-weight: bold;
+            box-shadow: inset 0 -2px 0 rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <section id="otamatone-section">
+        <div id="otamatone-container">
+            <div id="stem"></div>
+            <div id="head-wrapper">
+                <div class="head-base">
+                    <div class="eye left-eye"></div>
+                    <div class="eye right-eye"></div>
+                </div>
+                <div id="mouth"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="ui-section">
+        <div class="panel instructions">
+            <h2>How to Play</h2>
+            <p>🖱️ <strong>막대 클릭/드래그:</strong> 음 높이 조절</p>
+            <p>⌨️ <kbd>Space</kbd> <strong>누르기:</strong> 입을 벌려 소리 증폭</p>
+        </div>
+
+        <div id="tuner-panel" class="panel">
+            <div style="font-size: 1rem; font-weight: 800; opacity: 0.8; letter-spacing: 0.05em;">NOW PLAYING</div>
+            <div id="note-display">-</div>
+            <div id="accuracy-container">
+                <div id="accuracy-bar">
+                    <div id="accuracy-indicator"></div>
+                </div>
+                <div id="accuracy-text">연주를 시작하세요</div>
+                <div class="frequency-label" id="freq-display">0.00 Hz</div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        let audioCtx = null;
+        let oscillator = null;
+        let gainNode = null;
+        let filterNode = null;
+        let isTouching = false;
+        let isMouthOpen = false;
+        let currentFreq = 0;
+
+        const stem = document.getElementById('stem');
+        const headWrapper = document.getElementById('head-wrapper');
+        const noteDisplay = document.getElementById('note-display');
+        const tunerPanel = document.getElementById('tuner-panel');
+        const accuracyIndicator = document.getElementById('accuracy-indicator');
+        const accuracyText = document.getElementById('accuracy-text');
+        const freqDisplay = document.getElementById('freq-display');
+
+        // 사용자가 지정한 색상을 기반으로 채도를 높인 비비드 팔레트
+        const mainColors = {
+            'C': '#FF4D4D', // 선명한 레드 (E97474 -> Vivid)
+            'D': '#FF8C00', // 진한 오렌지 (F4A261 -> Vivid)
+            'E': '#FFD700', // 밝은 골드 (E9C46A -> Vivid)
+            'F': '#4CAF50', // 생생한 그린 (8AB17D -> Vivid)
+            'G': '#2196F3', // 맑은 블루 (6D9DC5 -> Vivid)
+            'A': '#3F51B5', // 깊은 인디고 (667292 -> Vivid)
+            'B': '#9C27B0'  // 진한 퍼플 (A29BFE -> Vivid)
+        };
+
+        const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function interpolateColor(color1Hex, color2Hex, factor) {
+            const c1 = hexToRgb(color1Hex);
+            const c2 = hexToRgb(color2Hex);
+            return {
+                r: c1.r + (c2.r - c1.r) * factor,
+                g: c1.g + (c2.g - c1.g) * factor,
+                b: c1.b + (c2.b - c1.b) * factor
+            };
+        }
+
+        function generateNoteColors() {
+            const fullPalette = [];
+            for (let i = 0; i < 12; i++) {
+                const currentName = noteNames[i];
+                if (mainColors[currentName]) {
+                    fullPalette.push(mainColors[currentName]);
+                } else {
+                    let prevIdx = (i - 1 + 12) % 12;
+                    let nextIdx = (i + 1) % 12;
+                    while (!mainColors[noteNames[prevIdx]]) prevIdx = (prevIdx - 1 + 12) % 12;
+                    while (!mainColors[noteNames[nextIdx]]) nextIdx = (nextIdx + 1) % 12;
+                    
+                    const mixed = interpolateColor(mainColors[noteNames[prevIdx]], mainColors[noteNames[nextIdx]], 0.5);
+                    const hex = "#" + ((1 << 24) + (Math.round(mixed.r) << 16) + (Math.round(mixed.g) << 8) + Math.round(mixed.b)).toString(16).slice(1);
+                    fullPalette.push(hex);
+                }
+            }
+            return fullPalette;
+        }
+
+        const notePalette = generateNoteColors();
+
+        function getClosestNote(frequency) {
+            if (frequency <= 0) return null;
+            const n = 12 * Math.log2(frequency / 440) + 69;
+            const roundedN = Math.round(n);
+            const cents = (n - roundedN) * 100;
+            const noteIndex = (roundedN % 12 + 12) % 12;
+            return { name: noteNames[noteIndex], index: noteIndex, cents };
+        }
+
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            oscillator = audioCtx.createOscillator();
+            oscillator.type = 'sawtooth'; 
+            filterNode = audioCtx.createBiquadFilter();
+            filterNode.type = 'lowpass';
+            filterNode.frequency.value = 1000; // 필터 주파수 약간 상승시켜 더 선명하게
+            filterNode.Q.value = 6; 
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = 0;
+
+            oscillator.connect(filterNode);
+            filterNode.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+        }
+
+        function updateTunerUI(freq) {
+            if (!isTouching) {
+                noteDisplay.innerText = "-";
+                tunerPanel.style.backgroundColor = "white";
+                tunerPanel.style.color = "#111";
+                accuracyIndicator.style.left = "50%";
+                accuracyText.innerText = "연주를 시작하세요";
+                freqDisplay.innerText = "0.00 Hz";
+                return;
+            }
+
+            const info = getClosestNote(freq);
+            if (info) {
+                const baseColor = notePalette[info.index];
+                
+                noteDisplay.innerText = info.name;
+                tunerPanel.style.backgroundColor = baseColor;
+                tunerPanel.style.color = "white";
+                
+                freqDisplay.innerText = `${freq.toFixed(2)} Hz`;
+
+                const position = 50 + (info.cents);
+                accuracyIndicator.style.left = `${Math.max(0, Math.min(100, position))}%`;
+
+                if (Math.abs(info.cents) < 8) {
+                    accuracyText.innerText = "★ PERFECT ★";
+                    accuracyIndicator.style.backgroundColor = "#fff";
+                    accuracyIndicator.style.boxShadow = "0 0 10px white";
+                } else {
+                    accuracyText.innerText = info.cents > 0 ? "TOO HIGH ↑" : "TOO LOW ↓";
+                    accuracyIndicator.style.backgroundColor = "rgba(255,255,255,0.8)";
+                    accuracyIndicator.style.boxShadow = "none";
+                }
+            }
+        }
+
+        function playNote(e) {
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const rect = stem.getBoundingClientRect();
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const y = clientY - rect.top;
+            const percent = 1 - (Math.max(0, Math.min(y / rect.height, 1)));
+            
+            // 주파수 범위: 110Hz(A2) ~ 880Hz(A5)
+            currentFreq = 110 * Math.pow(2, percent * 2); 
+            
+            oscillator.frequency.setTargetAtTime(currentFreq, audioCtx.currentTime, 0.03);
+            const targetGain = isMouthOpen ? 0.5 : 0.18;
+            gainNode.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.03);
+            
+            updateTunerUI(currentFreq);
+        }
+
+        const startAction = (e) => { isTouching = true; playNote(e); };
+        const moveAction = (e) => { if (isTouching) playNote(e); };
+        const stopAction = () => { 
+            isTouching = false; 
+            if (gainNode) gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+            updateTunerUI(0);
+        };
+
+        stem.addEventListener('mousedown', startAction);
+        window.addEventListener('mousemove', moveAction);
+        window.addEventListener('mouseup', stopAction);
+        stem.addEventListener('touchstart', (e) => { e.preventDefault(); startAction(e); });
+        window.addEventListener('touchmove', (e) => { if(isTouching) moveAction(e); });
+        window.addEventListener('touchend', stopAction);
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !e.repeat) {
+                e.preventDefault();
+                isMouthOpen = true;
+                headWrapper.classList.add('open');
+                if (filterNode && gainNode) {
+                    filterNode.frequency.setTargetAtTime(4000, audioCtx.currentTime, 0.1);
+                    if (isTouching) gainNode.gain.setTargetAtTime(0.35, audioCtx.currentTime, 0.1);
+                }
+            }
+        });
+
+            window.addEventListener('keyup', (e) => {
+            if (e.code === 'Space') {
+                isMouthOpen = false;
+                headWrapper.classList.remove('open');
+                if (filterNode && gainNode) {
+                    filterNode.frequency.setTargetAtTime(1000, audioCtx.currentTime, 0.1);
+                    if (isTouching) gainNode.gain.setTargetAtTime(0.18, audioCtx.currentTime, 0.1);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
